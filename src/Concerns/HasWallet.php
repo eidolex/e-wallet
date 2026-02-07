@@ -48,6 +48,10 @@ trait HasWallet
      */
     public function topUp(TopUpData $data): Transaction
     {
+        if ($data->amount < 1) {
+            throw new InvalidArgumentException('Amount must be greater than 0');
+        }
+
         return DB::transaction(function () use ($data): Transaction {
             $wallet = $this->wallet()->firstOrCreate();
 
@@ -80,8 +84,16 @@ trait HasWallet
      */
     public function withdraw(WithdrawData $data): Transaction
     {
+        if ($data->amount < 1) {
+            throw new InvalidArgumentException('Amount must be greater than 0');
+        }
+
         return DB::transaction(function () use ($data): Transaction {
             $wallet = $this->wallet()->firstOrCreate();
+
+            if ($wallet->balance < $data->amount) {
+                throw new InvalidArgumentException('Insufficient balance');
+            }
 
             /**
              * @var class-string<WithdrawDataTransformerContract> $transformerClass
@@ -112,8 +124,17 @@ trait HasWallet
      */
     public function transfer(TransferData $data): Transfer
     {
+        if ($data->amount < 1) {
+            throw new InvalidArgumentException('Amount must be greater than 0');
+        }
+
         return DB::transaction(function () use ($data): Transfer {
             $fromWallet = $this->wallet()->firstOrCreate();
+
+            if ($fromWallet->balance < $data->amount) {
+                throw new InvalidArgumentException('Insufficient balance');
+            }
+
             $toWallet = $data->to->wallet()->firstOrCreate();
 
             /**
