@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Eidolex\EWallet\Models;
 
+use Eidolex\EWallet\Enums\TransactionStatus;
 use Eidolex\EWallet\Enums\TransactionType;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -36,7 +37,7 @@ class Transaction extends Model
     {
         return [
             'type' => TransactionType::class,
-            'status' => config('e-wallet.enums.transaction_status'),
+            'status' => TransactionStatus::class,
             'name' => config('e-wallet.enums.transaction_name'),
             'metadata' => config('e-wallet.enums.transaction_metadata'),
         ];
