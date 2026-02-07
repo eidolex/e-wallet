@@ -14,9 +14,9 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * @template TName of \UnitEnum
- * @template WalletModel of \Eidolex\EWallet\Models\Wallet
- * @template TransactionModel of \Eidolex\EWallet\Models\Transaction
- * @template TransferModel of \Eidolex\EWallet\Models\Transfer
+ * @template WalletModel of \Eidolex\EWallet\Models\Wallet = \Eidolex\EWallet\Models\Wallet
+ * @template TransactionModel of \Eidolex\EWallet\Models\Transaction = \Eidolex\EWallet\Models\Transaction
+ * @template TransferModel of \Eidolex\EWallet\Models\Transfer = \Eidolex\EWallet\Models\Transfer
  */
 interface HasWalletContract
 {
