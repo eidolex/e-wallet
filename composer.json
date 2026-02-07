@@ -1,0 +1,26 @@
+{
+    "name": "eidolex/e-wallet",
+    "description": "E-Wallet package for managing wallets, transfers, and transactions.",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Eidolex\\EWallet\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Eidolex\\EWallet\\EWalletServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "php": "^8.2",
+        "illuminate/database": "^12.0",
+        "illuminate/support": "^12.0",
+        "spatie/laravel-data": "^4.19"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
