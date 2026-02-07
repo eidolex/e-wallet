@@ -15,6 +15,7 @@ use Eidolex\EWallet\Enums\TransactionType;
 use Eidolex\EWallet\Models\Transaction;
 use Eidolex\EWallet\Models\Transfer;
 use Eidolex\EWallet\Models\Wallet;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\DB;
@@ -53,7 +54,9 @@ trait HasWallet
         }
 
         return DB::transaction(function () use ($data): Transaction {
-            $wallet = $this->wallet()->firstOrCreate();
+            $wallet = $this->wallet ?: $this->wallet()->create();
+
+            $this->setRelation('wallet', $wallet);
 
             /**
              * @var class-string<TopUpDataTransformerContract> $transformerClass
@@ -89,11 +92,13 @@ trait HasWallet
         }
 
         return DB::transaction(function () use ($data): Transaction {
-            $wallet = $this->wallet()->firstOrCreate();
+            $wallet = $this->wallet ?: $this->wallet()->create();
 
             if ($wallet->balance < $data->amount) {
                 throw new InvalidArgumentException('Insufficient balance');
             }
+
+            $this->setRelation('wallet', $wallet);
 
             /**
              * @var class-string<WithdrawDataTransformerContract> $transformerClass
@@ -129,13 +134,19 @@ trait HasWallet
         }
 
         return DB::transaction(function () use ($data): Transfer {
-            $fromWallet = $this->wallet()->firstOrCreate();
+            $fromWallet = $this->wallet ?: $this->wallet()->create();
 
             if ($fromWallet->balance < $data->amount) {
                 throw new InvalidArgumentException('Insufficient balance');
             }
 
-            $toWallet = $data->to->wallet()->firstOrCreate();
+            $toWallet = $data->to->wallet ?: $data->to->wallet()->create();
+
+            $this->setRelation('wallet', $fromWallet);
+
+            if ($data->to instanceof Model) {
+                $data->to->setRelation('wallet', $toWallet);
+            }
 
             /**
              * @var class-string<TransferDataTransformerContract> $fromTransformerClass
