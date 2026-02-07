@@ -14,31 +14,37 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * @template TName of \UnitEnum
+ * @template WalletModel of \Eidolex\EWallet\Models\Wallet
+ * @template TransactionModel of \Eidolex\EWallet\Models\Transaction
+ * @template TransferModel of \Eidolex\EWallet\Models\Transfer
  */
 interface HasWalletContract
 {
     /**
-     * @return MorphOne<\Eidolex\EWallet\Models\Wallet,$this>
+     * @return MorphOne<WalletModel,$this>
      */
     public function wallet(): MorphOne;
 
     /**
-     * @return HasManyThrough<\Eidolex\EWallet\Models\Transaction,\Eidolex\EWallet\Models\Wallet,$this>
+     * @return HasManyThrough<TransactionModel,WalletModel,$this>
      */
     public function transactions(): HasManyThrough;
 
     /**
      * @param TopUpData<TName> $data
+     * @return TransactionModel
      */
     public function topUp(TopUpData $data): Transaction;
 
     /**
      * @param WithdrawData<TName> $data
+     * @return TransactionModel
      */
     public function withdraw(WithdrawData $data): Transaction;
 
     /**
      * @param TransferData<TName> $data
+     * @return TransferModel
      */
     public function transfer(TransferData $data): Transfer;
 }

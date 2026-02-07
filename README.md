@@ -44,7 +44,7 @@ use Eidolex\EWallet\Contracts\HasWalletContract;
 
 class User extends Model implements HasWalletContract
 {
-    /** @use HasWallet<\Eidolex\EWallet\Enums\TransactionName> */
+    /** @use HasWallet<\Eidolex\EWallet\Enums\TransactionName, \Eidolex\EWallet\Models\Wallet, \Eidolex\EWallet\Models\Transaction, \Eidolex\EWallet\Models\Transfer> */
     use HasWallet;
 }
 ```

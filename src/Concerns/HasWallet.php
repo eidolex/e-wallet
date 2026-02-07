@@ -23,29 +23,42 @@ use InvalidArgumentException;
 
 /**
  * @template TName of \UnitEnum
+ * @template WalletModel of \Eidolex\EWallet\Models\Wallet
+ * @template TransactionModel of \Eidolex\EWallet\Models\Transaction
+ * @template TransferModel of \Eidolex\EWallet\Models\Transfer
  *
  * @mixin \Illuminate\Database\Eloquent\Model
  */
 trait HasWallet
 {
     /**
-     * @return MorphOne<Wallet,$this>
+     * @return MorphOne<WalletModel,$this>
      */
     public function wallet(): MorphOne
     {
-        return $this->morphOne(Wallet::class, 'owner');
+        return $this->morphOne(
+            config('e-wallet.models.wallet'),
+            'owner'
+        );
     }
 
     /**
-     * @return HasManyThrough<Transaction,Wallet,$this>
+     * @return HasManyThrough<TransactionModel,WalletModel,$this>
      */
     public function transactions(): HasManyThrough
     {
-        return $this->hasManyThrough(Transaction::class, Wallet::class);
+        return $this->hasManyThrough(
+            config('e-wallet.models.transaction'),
+            config('e-wallet.models.wallet'),
+            'owner_id',
+            'wallet_id',
+            'owner_id',
+        );
     }
 
     /**
      * @param TopUpData<TName> $data
+     * @return TransactionModel
      */
     public function topUp(TopUpData $data): Transaction
     {
@@ -84,6 +97,7 @@ trait HasWallet
 
     /**
      * @param WithdrawData<TName> $data
+     * @return TransactionModel
      */
     public function withdraw(WithdrawData $data): Transaction
     {
@@ -126,6 +140,7 @@ trait HasWallet
 
     /**
      * @param TransferData<TName> $data
+     * @return TransferModel
      */
     public function transfer(TransferData $data): Transfer
     {

@@ -4,7 +4,7 @@ return [
     'enums' => [
         // Transaction Enums
         // 'transaction_status' => Eidolex\EWallet\Enums\TransactionStatus::class,
-        // 'transaction_name' => Eidolex\EWallet\Enums\TransactionName::class,
+        'transaction_name' => Eidolex\EWallet\Enums\TransactionName::class,
         'transaction_metadata' => 'array',
     ],
 
@@ -13,5 +13,11 @@ return [
         'transfer_to_data' => Eidolex\EWallet\Contracts\TransferDataTransformerContract::class,
         'withdraw_data' => Eidolex\EWallet\Contracts\WithdrawDataTransformerContract::class,
         'top_up_data' => Eidolex\EWallet\Contracts\TopUpDataTransformerContract::class,
+    ],
+
+    'models' => [
+        'wallet' => Eidolex\EWallet\Models\Wallet::class,
+        'transaction' => Eidolex\EWallet\Models\Transaction::class,
+        'transfer' => Eidolex\EWallet\Models\Transfer::class,
     ],
 ];

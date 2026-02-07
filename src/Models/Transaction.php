@@ -30,7 +30,7 @@ class Transaction extends Model
      */
     public function wallet(): BelongsTo
     {
-        return $this->belongsTo(Wallet::class);
+        return $this->belongsTo(config('e-wallet.models.wallet'));
     }
 
     protected function casts(): array

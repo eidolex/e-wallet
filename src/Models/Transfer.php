@@ -23,7 +23,10 @@ class Transfer extends Model
      */
     public function from(): BelongsTo
     {
-        return $this->belongsTo(Transaction::class, 'from_transaction_id');
+        return $this->belongsTo(
+            config('e-wallet.models.transaction'),
+            'from_transaction_id'
+        );
     }
 
     /**
@@ -31,7 +34,10 @@ class Transfer extends Model
      */
     public function to(): BelongsTo
     {
-        return $this->belongsTo(Transaction::class, 'to_transaction_id');
+        return $this->belongsTo(
+            config('e-wallet.models.transaction'),
+            'to_transaction_id'
+        );
     }
 
     protected function casts(): array

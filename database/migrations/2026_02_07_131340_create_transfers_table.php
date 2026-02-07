@@ -15,10 +15,10 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('from_transaction_id')
                 ->constrained('transactions')
-                ->onDelete('cascade');
+                ->cascadeOnDelete();
             $table->foreignUuid('to_transaction_id')
                 ->constrained('transactions')
-                ->onDelete('cascade');
+                ->cascadeOnDelete();
             $table->unsignedBigInteger('amount');
             $table->json('metadata')->nullable();
             $table->timestamps();

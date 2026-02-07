@@ -6,6 +6,7 @@ namespace Eidolex\EWallet\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Wallet extends Model
@@ -21,5 +22,16 @@ class Wallet extends Model
     public function owner(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /**
+     * @return HasMany<\Eidolex\EWallet\Models\Transaction,$this>
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(
+            config('e-wallet.models.transaction'),
+            'wallet_id'
+        );
     }
 }
