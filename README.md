@@ -49,7 +49,7 @@ class User extends Model implements HasWalletContract
 }
 ```
 
-This gives the model access to `wallet()`, `transactions()`, `topUp()`, `withdraw()`, and `transfer()`.
+This gives the model access to `wallet()`, `transactions()`, `topUp()`, `withdraw()`, and `transfer()`. To use your own Wallet, Transaction, or Transfer models, see [Custom models](#custom-models).
 
 ## Usage
 
@@ -277,31 +277,88 @@ The `type` and `wallet_id` fields are set automatically by the `HasWallet` trait
 ```php
 // config/e-wallet.php
 return [
+    'models' => [
+        // Eloquent model for wallets (polymorphic owner)
+        'wallet' => Eidolex\EWallet\Models\Wallet::class,
+
+        // Eloquent model for deposit/withdrawal records
+        'transaction' => Eidolex\EWallet\Models\Transaction::class,
+
+        // Eloquent model linking sender and receiver transactions
+        'transfer' => Eidolex\EWallet\Models\Transfer::class,
+    ],
+
     'enums' => [
         // Cast for the Transaction `status` column (string or enum class)
         // 'transaction_status' => Eidolex\EWallet\Enums\TransactionStatus::class,
 
         // Cast for the Transaction `name` column (string or enum class)
-        // 'transaction_name' => Eidolex\EWallet\Enums\TransactionName::class,
+        'transaction_name' => Eidolex\EWallet\Enums\TransactionName::class,
 
         // Cast for the Transaction `metadata` column
         'transaction_metadata' => 'array',
     ],
 
     'transformers' => [
-        // Transformer for the sender side of a transfer
         'transfer_from_data' => Eidolex\EWallet\Contracts\TransferDataTransformerContract::class,
-
-        // Transformer for the receiver side of a transfer
         'transfer_to_data' => Eidolex\EWallet\Contracts\TransferDataTransformerContract::class,
-
-        // Transformer for withdrawals
         'withdraw_data' => Eidolex\EWallet\Contracts\WithdrawDataTransformerContract::class,
-
-        // Transformer for top-ups
         'top_up_data' => Eidolex\EWallet\Contracts\TopUpDataTransformerContract::class,
     ],
 ];
+```
+
+### Custom Models
+
+You can swap the package models with your own by extending the base classes and registering them in config. Use this when you need a custom table, extra attributes, or app-specific methods.
+
+**1. Extend the package model** (e.g. custom Wallet):
+
+```php
+// app/Models/EWallet.php
+namespace App\Models;
+
+use Eidolex\EWallet\Models\Wallet;
+
+class EWallet extends Wallet
+{
+    protected $table = 'wallets';
+}
+```
+
+**2. Register in config:**
+
+```php
+// config/e-wallet.php
+return [
+    'models' => [
+        'wallet' => App\Models\EWallet::class,
+        'transaction' => Eidolex\EWallet\Models\Transaction::class,
+        'transfer' => Eidolex\EWallet\Models\Transfer::class,
+    ],
+    // ...
+];
+```
+
+**3. Add the trait with matching generics** so static analysis and IDE know the correct types:
+
+```php
+// app/Models/User.php
+use Eidolex\EWallet\Concerns\HasWallet;
+use Eidolex\EWallet\Contracts\HasWalletContract;
+
+class User extends Model implements HasWalletContract
+{
+    /** @use HasWallet<\Eidolex\EWallet\Enums\TransactionName, \App\Models\EWallet, \Eidolex\EWallet\Models\Transaction, \Eidolex\EWallet\Models\Transfer> */
+    use HasWallet;
+}
+```
+
+Trait generic order: `TName`, `WalletModel`, `TransactionModel`, `TransferModel`. Omit or keep defaults for models you do not customize. If you only use a custom Wallet:
+
+```php
+/** @use HasWallet<\Eidolex\EWallet\Enums\TransactionName, \App\Models\EWallet> */
+use HasWallet;
 ```
 
 ## Database Schema
