@@ -29,8 +29,13 @@ class Wallet extends Model
      */
     public function transactions(): HasMany
     {
+        /**
+         * @var class-string<\Eidolex\EWallet\Models\Transaction> $class
+         */
+        $class = config('e-wallet.models.transaction');
+
         return $this->hasMany(
-            config('e-wallet.models.transaction'),
+            $class,
             'wallet_id'
         );
     }

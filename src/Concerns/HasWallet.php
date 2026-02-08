@@ -22,34 +22,45 @@ use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 /**
+ * @template TOwner of \Illuminate\Database\Eloquent\Model
  * @template TName of \UnitEnum
  * @template WalletModel of \Eidolex\EWallet\Models\Wallet = \Eidolex\EWallet\Models\Wallet
  * @template TransactionModel of \Eidolex\EWallet\Models\Transaction = \Eidolex\EWallet\Models\Transaction
  * @template TransferModel of \Eidolex\EWallet\Models\Transfer = \Eidolex\EWallet\Models\Transfer
  *
  * @mixin \Illuminate\Database\Eloquent\Model
+ * @mixin HasWalletContract<TOwner,TName,WalletModel,TransactionModel,TransferModel>
  */
 trait HasWallet
 {
-    /**
-     * @return MorphOne<WalletModel,$this>
-     */
     public function wallet(): MorphOne
     {
-        return $this->morphOne(
-            config('e-wallet.models.wallet'),
+        /**
+         * @var class-string<WalletModel> $class
+         */
+        $class = config('e-wallet.models.wallet');
+
+        return $this->morphOne( // @phpstan-ignore return.type (TDeclaringModel on MorphOne is invariant)
+            $class,
             'owner'
         );
     }
 
-    /**
-     * @return HasManyThrough<TransactionModel,WalletModel,$this>
-     */
     public function transactions(): HasManyThrough
     {
-        return $this->hasManyThrough(
-            config('e-wallet.models.transaction'),
-            config('e-wallet.models.wallet'),
+        /**
+         * @var class-string<TransactionModel> $transactionClass
+         */
+        $transactionClass = config('e-wallet.models.transaction');
+
+        /**
+         * @var class-string<WalletModel> $walletClass
+         */
+        $walletClass = config('e-wallet.models.wallet');
+
+        return $this->hasManyThrough( // @phpstan-ignore return.type (TDeclaringModel on HasManyThrough is invariant)
+            $transactionClass,
+            $walletClass,
             'owner_id',
             'wallet_id',
             'owner_id',
@@ -149,13 +160,13 @@ trait HasWallet
         }
 
         return DB::transaction(function () use ($data): Transfer {
-            $fromWallet = $this->wallet ?: $this->wallet()->create();
+            $fromWallet = $this->getWallet();
 
             if ($fromWallet->balance < $data->amount) {
                 throw new InvalidArgumentException('Insufficient balance');
             }
 
-            $toWallet = $data->to->wallet ?: $data->to->wallet()->create();
+            $toWallet = $data->to->getWallet();
 
             $this->setRelation('wallet', $fromWallet);
 
@@ -165,9 +176,11 @@ trait HasWallet
 
             /**
              * @var class-string<TransferDataTransformerContract> $fromTransformerClass
-             * @var class-string<TransferDataTransformerContract> $toTransformerClass
              */
             $fromTransformerClass = config('e-wallet.transformers.transfer_from_data');
+            /**
+             * @var class-string<TransferDataTransformerContract> $toTransformerClass
+             */
             $toTransformerClass = config('e-wallet.transformers.transfer_to_data');
 
             $fromTransformer = app($fromTransformerClass);
@@ -212,5 +225,24 @@ trait HasWallet
 
             return $transfer;
         }, 3);
+    }
+
+    /**
+     * 
+     * @return WalletModel
+     */
+    public function getWallet(): Wallet
+    {
+        /**
+         * @var WalletModel|null $wallet
+         */
+        $wallet = $this->getRelation('wallet');
+
+        if (! $wallet) {
+            $wallet = $this->wallet()->create();
+            $this->setRelation('wallet', $wallet);
+        }
+
+        return $wallet;
     }
 }

@@ -25,21 +25,31 @@ class Transaction extends Model
         'metadata',
     ];
 
+    protected $casts = [
+        'type' => TransactionType::class,
+        'status' => TransactionStatus::class,
+    ];
+
     /**
      * @return BelongsTo<Wallet,$this>
      */
     public function wallet(): BelongsTo
     {
-        return $this->belongsTo(config('e-wallet.models.wallet'));
+        /**
+         * @var class-string<\Eidolex\EWallet\Models\Wallet> $class
+         */
+        $class = config('e-wallet.models.wallet');
+
+        return $this->belongsTo($class);
     }
 
     protected function casts(): array
     {
-        return [
-            'type' => TransactionType::class,
-            'status' => TransactionStatus::class,
+        $casts = array_merge($this->casts, [
             'name' => config('e-wallet.enums.transaction_name'),
             'metadata' => config('e-wallet.enums.transaction_metadata'),
-        ];
+        ]);
+
+        return $casts;
     }
 }

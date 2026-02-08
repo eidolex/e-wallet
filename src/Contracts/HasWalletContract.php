@@ -9,24 +9,28 @@ use Eidolex\EWallet\Data\TransferData;
 use Eidolex\EWallet\Data\WithdrawData;
 use Eidolex\EWallet\Models\Transaction;
 use Eidolex\EWallet\Models\Transfer;
+use Eidolex\EWallet\Models\Wallet;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
+ * @template TOwner of \Illuminate\Database\Eloquent\Model
  * @template TName of \UnitEnum
  * @template WalletModel of \Eidolex\EWallet\Models\Wallet = \Eidolex\EWallet\Models\Wallet
  * @template TransactionModel of \Eidolex\EWallet\Models\Transaction = \Eidolex\EWallet\Models\Transaction
  * @template TransferModel of \Eidolex\EWallet\Models\Transfer = \Eidolex\EWallet\Models\Transfer
+ *
+ * @property-read WalletModel|null $wallet
  */
 interface HasWalletContract
 {
     /**
-     * @return MorphOne<WalletModel,$this>
+     * @return MorphOne<WalletModel,TOwner>
      */
     public function wallet(): MorphOne;
 
     /**
-     * @return HasManyThrough<TransactionModel,WalletModel,$this>
+     * @return HasManyThrough<TransactionModel,WalletModel,TOwner>
      */
     public function transactions(): HasManyThrough;
 
@@ -47,4 +51,9 @@ interface HasWalletContract
      * @return TransferModel
      */
     public function transfer(TransferData $data): Transfer;
+
+    /**
+     * @return WalletModel
+     */
+    public function getWallet(): Wallet;
 }

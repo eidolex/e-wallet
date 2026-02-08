@@ -23,8 +23,13 @@ class Transfer extends Model
      */
     public function from(): BelongsTo
     {
+        /**
+         * @var class-string<\Eidolex\EWallet\Models\Transaction> $class
+         */
+        $class = config('e-wallet.models.transaction');
+
         return $this->belongsTo(
-            config('e-wallet.models.transaction'),
+            $class,
             'from_transaction_id'
         );
     }
@@ -34,10 +39,12 @@ class Transfer extends Model
      */
     public function to(): BelongsTo
     {
-        return $this->belongsTo(
-            config('e-wallet.models.transaction'),
-            'to_transaction_id'
-        );
+        /**
+         * @var class-string<\Eidolex\EWallet\Models\Transaction> $class
+         */
+        $class = config('e-wallet.models.transaction');
+
+        return $this->belongsTo($class, 'to_transaction_id');
     }
 
     protected function casts(): array
