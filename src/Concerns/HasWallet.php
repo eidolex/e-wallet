@@ -15,7 +15,6 @@ use Eidolex\EWallet\Enums\TransactionType;
 use Eidolex\EWallet\Models\Transaction;
 use Eidolex\EWallet\Models\Transfer;
 use Eidolex\EWallet\Models\Wallet;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\DB;
@@ -78,9 +77,7 @@ trait HasWallet
         }
 
         return DB::transaction(function () use ($data): Transaction {
-            $wallet = $this->wallet ?: $this->wallet()->create();
-
-            $this->setRelation('wallet', $wallet);
+            $wallet = $this->getWallet();
 
             /**
              * @var class-string<TopUpDataTransformerContract> $transformerClass
@@ -117,13 +114,11 @@ trait HasWallet
         }
 
         return DB::transaction(function () use ($data): Transaction {
-            $wallet = $this->wallet ?: $this->wallet()->create();
+            $wallet = $this->getWallet();
 
             if ($wallet->balance < $data->amount) {
                 throw new InvalidArgumentException('Insufficient balance');
             }
-
-            $this->setRelation('wallet', $wallet);
 
             /**
              * @var class-string<WithdrawDataTransformerContract> $transformerClass
@@ -167,12 +162,6 @@ trait HasWallet
             }
 
             $toWallet = $data->to->getWallet();
-
-            $this->setRelation('wallet', $fromWallet);
-
-            if ($data->to instanceof Model) {
-                $data->to->setRelation('wallet', $toWallet);
-            }
 
             /**
              * @var class-string<TransferDataTransformerContract> $fromTransformerClass
@@ -233,6 +222,8 @@ trait HasWallet
      */
     public function getWallet(): Wallet
     {
+        $this->loadMissing('wallet');
+
         /**
          * @var WalletModel|null $wallet
          */
