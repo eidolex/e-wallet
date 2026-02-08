@@ -2,12 +2,6 @@
 
 namespace Eidolex\EWallet;
 
-use Eidolex\EWallet\Contracts\TopUpDataTransformerContract;
-use Eidolex\EWallet\Contracts\TransferDataTransformerContract;
-use Eidolex\EWallet\Contracts\WithdrawDataTransformerContract;
-use Eidolex\EWallet\Transformers\TopUpDataTransformer;
-use Eidolex\EWallet\Transformers\TransferFromDataTransformer;
-use Eidolex\EWallet\Transformers\WithdrawDataTransformer;
 use Illuminate\Support\ServiceProvider;
 
 class EWalletServiceProvider extends ServiceProvider
@@ -18,12 +12,9 @@ class EWalletServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(
-            __DIR__.'/../config/e-wallet.php', 'e-wallet'
+            __DIR__ . '/../config/e-wallet.php',
+            'e-wallet'
         );
-
-        $this->app->bind(TopUpDataTransformerContract::class, TopUpDataTransformer::class);
-        $this->app->bind(TransferDataTransformerContract::class, TransferFromDataTransformer::class);
-        $this->app->bind(WithdrawDataTransformerContract::class, WithdrawDataTransformer::class);
     }
 
     /**
@@ -31,15 +22,15 @@ class EWalletServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../config/e-wallet.php' => config_path('e-wallet.php'),
+                __DIR__ . '/../config/e-wallet.php' => config_path('e-wallet.php'),
             ], 'e-wallet-config');
 
             $this->publishes([
-                __DIR__.'/../database/migrations' => database_path('migrations'),
+                __DIR__ . '/../database/migrations' => database_path('migrations'),
             ], 'e-wallet-migrations');
         }
     }
