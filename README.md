@@ -352,7 +352,7 @@ The package creates three tables:
 | `id` | UUID (primary) |
 | `owner_type` | string |
 | `owner_id` | string |
-| `balance` | unsigned big integer (default: 0) |
+| `balance` | big integer (default: 0) |
 | `created_at` | timestamp |
 | `updated_at` | timestamp |
 
@@ -361,24 +361,24 @@ The package creates three tables:
 | Column | Type |
 |---|---|
 | `id` | UUID (primary) |
-| `wallet_id` | UUID (foreign key) |
-| `type` | unsigned tiny integer (enum: 0 = Withdraw, 1 = Deposit) |
+| `wallet_id` | UUID (index) |
+| `type` | unsigned tiny integer (enum: Withdraw, Deposit) |
 | `name` | string (configurable enum) |
 | `amount` | unsigned big integer |
 | `status` | unsigned tiny integer (enum: Pending, Completed, Cancelled, Failed, Refunded) |
-| `opening_balance` | unsigned big integer (nullable) |
-| `closing_balance` | unsigned big integer (nullable) |
+| `opening_balance` | big integer (nullable) |
+| `closing_balance` | big integer (nullable) |
 | `metadata` | JSON (nullable) |
 | `created_at` | timestamp |
 | `updated_at` | timestamp |
 
-**transfers** — Links two transactions (sender and receiver).
+**transfers** — Links two transactions (sender and receiver). Foreign keys reference `transactions` with cascade on delete.
 
 | Column | Type |
 |---|---|
 | `id` | UUID (primary) |
-| `from_transaction_id` | UUID (foreign key, cascade delete) |
-| `to_transaction_id` | UUID (foreign key, cascade delete) |
+| `from_transaction_id` | UUID (foreign key → transactions, cascade delete) |
+| `to_transaction_id` | UUID (foreign key → transactions, cascade delete) |
 | `amount` | unsigned big integer |
 | `metadata` | JSON (nullable) |
 | `created_at` | timestamp |
