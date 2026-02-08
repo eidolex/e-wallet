@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Eidolex\EWallet\Enums;
 
-enum TransactionType: string
+enum TransactionType: int
 {
-    case Deposit = 'deposit';
-    case Withdraw = 'withdraw';
+    case Withdraw = 0;
+    case Deposit = 1;
 }

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Eidolex\EWallet\Enums;
 
-enum TransactionStatus: string
+enum TransactionStatus: int
 {
-    case Pending = 'pending';
-    case Completed = 'completed';
-    case Cancelled = 'cancelled';
+    case Pending = 0;
+    case Completed = 1;
+    case Cancelled = 2;
+    case Failed = 3;
+    case Refunded = 4;
 }
