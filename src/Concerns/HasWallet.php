@@ -63,8 +63,7 @@ trait HasWallet
             $walletClass,
             'owner_id',
             'wallet_id',
-            'owner_id',
-        );
+        )->where('owner_type', $this->getMorphClass());
     }
 
     /**
