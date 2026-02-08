@@ -74,6 +74,8 @@ $transaction->amount; // 10000
 $transaction->type;   // TransactionType::Deposit
 ```
 
+You can pass a custom DTO that extends `TopUpData` (e.g. to add fees, computed metadata, or opening/closing balance). See [Custom TopUpData](#custom-topupdata) for an example.
+
 ### Withdraw
 
 Deduct funds from a wallet.
@@ -88,6 +90,8 @@ $transaction = $user->withdraw(new WithdrawData(
     metadata: ['reason' => 'cash_out'],
 ));
 ```
+
+You can pass a custom DTO that extends `WithdrawData` and overrides `fields(Wallet $wallet)`. See [Custom TopUpData](#custom-topupdata) for the same pattern.
 
 ### Transfer
 
@@ -109,6 +113,8 @@ $transfer->from; // Transaction (sender, type: Withdraw)
 $transfer->to;   // Transaction (receiver, type: Deposit)
 $transfer->amount;
 ```
+
+You can pass a custom DTO that extends `TransferData` and overrides `fromFields(Wallet $wallet)` and `toFields(Wallet $wallet)`. See [Custom TopUpData](#custom-topupdata) for the same pattern.
 
 ### Accessing the Wallet & Transactions
 
@@ -204,6 +210,59 @@ The `metadata` column is cast to `array` by default. You can change this in the 
     'transaction_metadata' => 'collection', // or AsArrayObject::class, etc.
 ],
 ```
+
+### Custom TopUpData
+
+Extend `TopUpData` and override `fields(Wallet $wallet)` when you need custom transaction attributes (e.g. computed metadata, fees, or opening/closing balance).
+
+```php
+// app/Data/CustomTopUpData.php
+namespace App\Data;
+
+use Eidolex\EWallet\Data\TopUpData;
+use Eidolex\EWallet\Models\Wallet;
+
+/**
+ * Custom top-up DTO that adds a 2% fee, processed_at timestamp, and opening/closing balance to transactions.
+ *
+ * @extends TopUpData<\Eidolex\EWallet\Enums\TransactionName,\Eidolex\EWallet\Models\Wallet>
+ */
+class CustomTopUpData extends TopUpData
+{
+    public function fields(Wallet $wallet): array
+    {
+        $fee = (int) ($this->amount * 0.02);
+        $metadata = array_merge($this->metadata ?? [], [
+            'processed_at' => now()->toISOString(),
+            'fee' => $fee,
+        ]);
+
+        return [
+            'name' => $this->name,
+            'amount' => $this->amount,
+            'status' => $this->status,
+            'metadata' => $metadata,
+            'opening_balance' => $wallet->balance,
+            'closing_balance' => $wallet->balance + $this->amount,
+        ];
+    }
+}
+```
+
+Usage:
+
+```php
+use App\Data\CustomTopUpData;
+use Eidolex\EWallet\Enums\TransactionName;
+
+$transaction = $user->topUp(new CustomTopUpData(
+    name: TransactionName::TopUp,
+    amount: 10000,
+    metadata: ['source' => 'credit_card'],
+));
+```
+
+The same pattern applies to `WithdrawData` (override `fields(Wallet $wallet)`) and `TransferData` (override `fromFields(Wallet $wallet)` and `toFields(Wallet $wallet)`).
 
 ## Configuration Reference
 
