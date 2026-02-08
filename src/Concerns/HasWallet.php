@@ -15,6 +15,7 @@ use Eidolex\EWallet\Enums\TransactionType;
 use Eidolex\EWallet\Models\Transaction;
 use Eidolex\EWallet\Models\Transfer;
 use Eidolex\EWallet\Models\Wallet;
+use Exception;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\DB;
@@ -100,7 +101,7 @@ trait HasWallet
             }
 
             return $transaction;
-        }, 3);
+        });
     }
 
     /**
@@ -141,7 +142,7 @@ trait HasWallet
             }
 
             return $transaction;
-        }, 3);
+        });
     }
 
     /**
@@ -213,7 +214,7 @@ trait HasWallet
             ]);
 
             return $transfer;
-        }, 3);
+        });
     }
 
     /**
@@ -222,18 +223,35 @@ trait HasWallet
      */
     public function getWallet(): Wallet
     {
-        $this->loadMissing('wallet');
+        return $this->getLoadOrCreateWallet();
+    }
 
-        /**
-         * @var WalletModel|null $wallet
-         */
-        $wallet = $this->getRelation('wallet');
+    /**
+     * 
+     * @return WalletModel
+     */
+    private function getLoadOrCreateWallet($attempts = 3): Wallet
+    {
+        try {
+            $this->loadMissing('wallet');
 
-        if (! $wallet) {
-            $wallet = $this->wallet()->create();
-            $this->setRelation('wallet', $wallet);
+            /**
+             * @var WalletModel|null $wallet
+             */
+            $wallet = $this->getRelation('wallet');
+
+            if (! $wallet) {
+                $wallet = $this->wallet()->create();
+                $this->setRelation('wallet', $wallet);
+            }
+
+            return $wallet;
+        } catch (Exception $e) {
+            if ($attempts < 1) {
+                throw $e;
+            }
+
+            return $this->getLoadOrCreateWallet($attempts - 1);
         }
-
-        return $wallet;
     }
 }
