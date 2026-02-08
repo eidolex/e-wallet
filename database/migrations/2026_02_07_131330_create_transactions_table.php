@@ -26,8 +26,8 @@ return new class extends Migration
                 ->comment(
                     collect(TransactionStatus::cases())->map(fn(TransactionStatus $status) => $status->name)->implode(', ')
                 )->index();
-            $table->unsignedBigInteger('opening_balance')->nullable();
-            $table->unsignedBigInteger('closing_balance')->nullable();
+            $table->bigInteger('opening_balance')->nullable();
+            $table->bigInteger('closing_balance')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamps();
         });

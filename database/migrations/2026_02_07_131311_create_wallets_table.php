@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('wallets', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->morphs('owner');
-            $table->unsignedBigInteger('balance')->default(0);
+            $table->bigInteger('balance')->default(0);
             $table->timestamps();
             $table->unique(['owner_type', 'owner_id']);
         });
