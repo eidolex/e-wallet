@@ -20,7 +20,6 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @template TransactionModel of \Eidolex\EWallet\Models\Transaction = \Eidolex\EWallet\Models\Transaction
  * @template TransferModel of \Eidolex\EWallet\Models\Transfer = \Eidolex\EWallet\Models\Transfer
  *
- * @property-read WalletModel|null $wallet
  */
 interface HasWalletContract
 {
