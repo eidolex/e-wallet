@@ -4,9 +4,9 @@ A Laravel package for managing wallets, transfers, and transactions. Attach a wa
 
 ## Requirements
 
-- PHP ^8.2
-- Laravel ^12.0
-- [spatie/laravel-data](https://github.com/spatie/laravel-data) ^4.19
+- PHP ^8.1
+- Laravel ^9.0 | ^10.0 | ^11.0 | ^12.0
+- [spatie/laravel-data](https://github.com/spatie/laravel-data) ^3.0 | ^4.0 (v3 for Laravel 9, v4 for Laravel 10+)
 
 ## Installation
 
