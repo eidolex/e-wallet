@@ -90,9 +90,15 @@ trait HasWallet
                 throw new InvalidArgumentException('Transformer must implement TopUpDataTransformerContract');
             }
 
-            $transaction = new Transaction($transformer->transform($data));
+            $transaction = new Transaction($transformer->transform($wallet, $data));
             $transaction->type = TransactionType::Deposit;
             $transaction->wallet_id = $wallet->id;
+            if ($transaction->opening_balance !== null) {
+                $transaction->opening_balance = $wallet->balance;
+            }
+            if ($transaction->closing_balance !== null) {
+                $transaction->closing_balance = $wallet->balance + $data->amount;
+            }
             $transaction->save();
 
             if ($transaction->status === TransactionStatus::Completed) {
@@ -131,9 +137,15 @@ trait HasWallet
                 throw new InvalidArgumentException('Transformer must implement WithdrawDataTransformerContract');
             }
 
-            $transaction = new Transaction($transformer->transform($data));
+            $transaction = new Transaction($transformer->transform($wallet, $data));
             $transaction->type = TransactionType::Withdraw;
             $transaction->wallet_id = $wallet->id;
+            if ($transaction->opening_balance !== null) {
+                $transaction->opening_balance = $wallet->balance;
+            }
+            if ($transaction->closing_balance !== null) {
+                $transaction->closing_balance = $wallet->balance + $data->amount;
+            }
             $transaction->save();
 
             if ($transaction->status === TransactionStatus::Completed) {
@@ -183,14 +195,26 @@ trait HasWallet
                 throw new InvalidArgumentException('Transformer must implement TransferDataTransformerContract');
             }
 
-            $fromTransaction = new Transaction($fromTransformer->transform($data));
+            $fromTransaction = new Transaction($fromTransformer->transform($fromWallet, $data));
             $fromTransaction->type = TransactionType::Withdraw;
             $fromTransaction->wallet_id = $fromWallet->id;
+            if ($fromTransaction->opening_balance !== null) {
+                $fromTransaction->opening_balance = $fromWallet->balance;
+            }
+            if ($fromTransaction->closing_balance !== null) {
+                $fromTransaction->closing_balance = $fromWallet->balance - $data->amount;
+            }
             $fromTransaction->save();
 
-            $toTransaction = new Transaction($toTransformer->transform($data));
+            $toTransaction = new Transaction($toTransformer->transform($toWallet, $data));
             $toTransaction->type = TransactionType::Deposit;
             $toTransaction->wallet_id = $toWallet->id;
+            if ($toTransaction->opening_balance !== null) {
+                $toTransaction->opening_balance = $toWallet->balance;
+            }
+            if ($toTransaction->closing_balance !== null) {
+                $toTransaction->closing_balance = $toWallet->balance + $data->amount;
+            }
             $toTransaction->save();
 
             $transfer = Transfer::query()->create([

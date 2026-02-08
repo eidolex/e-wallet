@@ -6,10 +6,11 @@ namespace Eidolex\EWallet\Transformers;
 
 use Eidolex\EWallet\Contracts\TopUpDataTransformerContract;
 use Eidolex\EWallet\Data\TopUpData;
+use Eidolex\EWallet\Models\Wallet;
 
 class TopUpDataTransformer implements TopUpDataTransformerContract
 {
-    public function transform(TopUpData $data): array
+    public function transform(Wallet $wallet, TopUpData $data): array
     {
         return [
             'name' => $data->name,
