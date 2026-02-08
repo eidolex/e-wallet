@@ -8,13 +8,6 @@ return [
         'transaction_metadata' => 'array',
     ],
 
-    'transformers' => [
-        'top_up_data' => Eidolex\EWallet\Contracts\TopUpDataTransformerContract::class,
-        'withdraw_data' => Eidolex\EWallet\Contracts\WithdrawDataTransformerContract::class,
-        'transfer_from_data' => Eidolex\EWallet\Transformers\TransferFromDataTransformer::class,
-        'transfer_to_data' => Eidolex\EWallet\Transformers\TransferToDataTransformer::class,
-    ],
-
     'models' => [
         'wallet' => Eidolex\EWallet\Models\Wallet::class,
         'transaction' => Eidolex\EWallet\Models\Transaction::class,

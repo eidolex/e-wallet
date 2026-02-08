@@ -79,18 +79,7 @@ trait HasWallet
         return DB::transaction(function () use ($data): Transaction {
             $wallet = $this->getWallet();
 
-            /**
-             * @var class-string<TopUpDataTransformerContract> $transformerClass
-             */
-            $transformerClass = config('e-wallet.transformers.top_up_data');
-
-            $transformer = app($transformerClass);
-
-            if (! $transformer instanceof TopUpDataTransformerContract) {
-                throw new InvalidArgumentException('Transformer must implement TopUpDataTransformerContract');
-            }
-
-            $transaction = new Transaction($transformer->transform($wallet, $data));
+            $transaction = new Transaction($data->fields($wallet));
             $transaction->type = TransactionType::Deposit;
             $transaction->wallet_id = $wallet->id;
             if ($transaction->opening_balance !== null) {
@@ -125,26 +114,14 @@ trait HasWallet
             if ($wallet->balance < $data->amount) {
                 throw new InvalidArgumentException('Insufficient balance');
             }
-
-            /**
-             * @var class-string<WithdrawDataTransformerContract> $transformerClass
-             */
-            $transformerClass = config('e-wallet.transformers.withdraw_data');
-
-            $transformer = app($transformerClass);
-
-            if (! $transformer instanceof WithdrawDataTransformerContract) {
-                throw new InvalidArgumentException('Transformer must implement WithdrawDataTransformerContract');
-            }
-
-            $transaction = new Transaction($transformer->transform($wallet, $data));
+            $transaction = new Transaction($data->fields($wallet));
             $transaction->type = TransactionType::Withdraw;
             $transaction->wallet_id = $wallet->id;
             if ($transaction->opening_balance !== null) {
                 $transaction->opening_balance = $wallet->balance;
             }
             if ($transaction->closing_balance !== null) {
-                $transaction->closing_balance = $wallet->balance + $data->amount;
+                $transaction->closing_balance = $wallet->balance - $data->amount;
             }
             $transaction->save();
 
@@ -175,27 +152,7 @@ trait HasWallet
 
             $toWallet = $data->to->getWallet();
 
-            /**
-             * @var class-string<TransferDataTransformerContract> $fromTransformerClass
-             */
-            $fromTransformerClass = config('e-wallet.transformers.transfer_from_data');
-            /**
-             * @var class-string<TransferDataTransformerContract> $toTransformerClass
-             */
-            $toTransformerClass = config('e-wallet.transformers.transfer_to_data');
-
-            $fromTransformer = app($fromTransformerClass);
-            $toTransformer = app($toTransformerClass);
-
-            if (! $fromTransformer instanceof TransferDataTransformerContract) {
-                throw new InvalidArgumentException('Transformer must implement TransferDataTransformerContract');
-            }
-
-            if (! $toTransformer instanceof TransferDataTransformerContract) {
-                throw new InvalidArgumentException('Transformer must implement TransferDataTransformerContract');
-            }
-
-            $fromTransaction = new Transaction($fromTransformer->transform($fromWallet, $data));
+            $fromTransaction = new Transaction($data->fromFields($fromWallet));
             $fromTransaction->type = TransactionType::Withdraw;
             $fromTransaction->wallet_id = $fromWallet->id;
             if ($fromTransaction->opening_balance !== null) {
@@ -206,7 +163,7 @@ trait HasWallet
             }
             $fromTransaction->save();
 
-            $toTransaction = new Transaction($toTransformer->transform($toWallet, $data));
+            $toTransaction = new Transaction($data->toFields($toWallet));
             $toTransaction->type = TransactionType::Deposit;
             $toTransaction->wallet_id = $toWallet->id;
             if ($toTransaction->opening_balance !== null) {
