@@ -9,10 +9,10 @@ return [
     ],
 
     'transformers' => [
-        'transfer_from_data' => Eidolex\EWallet\Contracts\TransferDataTransformerContract::class,
-        'transfer_to_data' => Eidolex\EWallet\Contracts\TransferDataTransformerContract::class,
-        'withdraw_data' => Eidolex\EWallet\Contracts\WithdrawDataTransformerContract::class,
         'top_up_data' => Eidolex\EWallet\Contracts\TopUpDataTransformerContract::class,
+        'withdraw_data' => Eidolex\EWallet\Contracts\WithdrawDataTransformerContract::class,
+        'transfer_from_data' => Eidolex\EWallet\Transformers\TransferFromDataTransformer::class,
+        'transfer_to_data' => Eidolex\EWallet\Transformers\TransferToDataTransformer::class,
     ],
 
     'models' => [
