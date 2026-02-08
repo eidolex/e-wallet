@@ -138,7 +138,7 @@ $transaction = $user->topUp(new TopUpData(
 
 ## Data Transfer Objects
 
-All operations use [Spatie Laravel Data](https://spatie.be/docs/laravel-data) DTOs. The `name` parameter accepts any `UnitEnum`, so you can use the built-in `TransactionName` or your own enum.
+All operations use [Spatie Laravel Data](https://spatie.be/docs/laravel-data) DTOs. The `name` parameter accepts any `UnitEnum`, so you can use the built-in `TransactionName` or your own enum. Transaction attributes are built from each DTO: `TopUpData` and `WithdrawData` expose `fields(Wallet $wallet)`, and `TransferData` exposes `fromFields(Wallet $wallet)` and `toFields(Wallet $wallet)`. Extend the DTO classes and override these methods if you need custom transaction data (e.g. computed metadata or balances).
 
 | DTO | Parameters |
 |---|---|
@@ -205,76 +205,6 @@ The `metadata` column is cast to `array` by default. You can change this in the 
 ],
 ```
 
-### Custom Transformers
-
-Transformers convert DTOs into the array used to create `Transaction` models. You can replace any transformer to add custom logic such as computing `opening_balance`/`closing_balance`, adding fees, or modifying metadata.
-
-#### Step 1: Create a transformer that implements the appropriate contract
-
-All transformer contracts accept `(Wallet $wallet, Data $data)` so you can use the wallet (e.g. for `opening_balance` / `closing_balance`).
-
-```php
-namespace App\Transformers;
-
-use Eidolex\EWallet\Contracts\TopUpDataTransformerContract;
-use Eidolex\EWallet\Data\TopUpData;
-use Eidolex\EWallet\Models\Wallet;
-
-class CustomTopUpDataTransformer implements TopUpDataTransformerContract
-{
-    public function transform(Wallet $wallet, TopUpData $data): array
-    {
-        return [
-            'name' => $data->name,
-            'amount' => $data->amount,
-            'status' => $data->status,
-            'metadata' => array_merge($data->metadata ?? [], [
-                'processed_at' => now()->toISOString(),
-                'fee' => (int) ($data->amount * 0.02),
-            ]),
-        ];
-    }
-}
-```
-
-#### Step 2: Register it in the config
-
-```php
-// config/e-wallet.php
-'transformers' => [
-    'top_up_data' => App\Transformers\CustomTopUpDataTransformer::class,
-    // ...
-],
-```
-
-#### Available Transformer Contracts
-
-| Config Key | Contract | Default Implementation | Purpose |
-|---|---|---|---|
-| `top_up_data` | `TopUpDataTransformerContract` | `TopUpDataTransformer` | Transforms `TopUpData` for deposit transactions |
-| `withdraw_data` | `WithdrawDataTransformerContract` | `WithdrawDataTransformer` | Transforms `WithdrawData` for withdrawal transactions |
-| `transfer_from_data` | `TransferDataTransformerContract` | `TransferFromDataTransformer` | Transforms `TransferData` for the sender's withdrawal transaction |
-| `transfer_to_data` | `TransferDataTransformerContract` | `TransferToDataTransformer` | Transforms `TransferData` for the receiver's deposit transaction |
-
-> **Note:** Transfer transformers both implement `TransferDataTransformerContract` but are configured separately for the sender (`transfer_from_data`) and receiver (`transfer_to_data`) sides. Register the concrete classes (`TransferFromDataTransformer` and `TransferToDataTransformer`) in config so each side uses the correct implementation.
-
-#### Transformer Return Array
-
-The array returned by `transform(Wallet $wallet, Data $data)` is passed directly to the `Transaction` model constructor. The available fields are:
-
-```php
-[
-    'name'            => UnitEnum,           // required — transaction name
-    'amount'          => int,                // required — transaction amount
-    'status'          => TransactionStatus,  // required — affects balance update
-    'metadata'        => ?array,             // optional
-    'opening_balance' => ?int,               // optional — set by your transformer
-    'closing_balance' => ?int,               // optional — set by your transformer
-]
-```
-
-The `type` and `wallet_id` fields are set automatically by the `HasWallet` trait.
-
 ## Configuration Reference
 
 ```php
@@ -291,13 +221,6 @@ return [
         'transaction_metadata' => 'array',
     ],
 
-    'transformers' => [
-        'top_up_data' => Eidolex\EWallet\Contracts\TopUpDataTransformerContract::class,
-        'withdraw_data' => Eidolex\EWallet\Contracts\WithdrawDataTransformerContract::class,
-        'transfer_from_data' => Eidolex\EWallet\Transformers\TransferFromDataTransformer::class,
-        'transfer_to_data' => Eidolex\EWallet\Transformers\TransferToDataTransformer::class,
-    ],
-
     'models' => [
         'wallet' => Eidolex\EWallet\Models\Wallet::class,
         'transaction' => Eidolex\EWallet\Models\Transaction::class,
@@ -305,8 +228,6 @@ return [
     ],
 ];
 ```
-
-The service provider binds `TopUpDataTransformerContract` and `WithdrawDataTransformerContract` to their default implementations, so you can leave those config values as the contract. For transfers, use the concrete classes above so sender and receiver use the correct transformer.
 
 ### Custom Models
 
