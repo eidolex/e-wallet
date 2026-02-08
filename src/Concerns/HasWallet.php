@@ -93,7 +93,7 @@ trait HasWallet
 
             $transaction = new Transaction($transformer->transform($data));
             $transaction->type = TransactionType::Deposit;
-            $transaction->wallet()->associate($wallet);
+            $transaction->wallet_id = $wallet->id;
             $transaction->save();
 
             if ($transaction->status === TransactionStatus::Completed) {
@@ -134,7 +134,7 @@ trait HasWallet
 
             $transaction = new Transaction($transformer->transform($data));
             $transaction->type = TransactionType::Withdraw;
-            $transaction->wallet()->associate($wallet);
+            $transaction->wallet_id = $wallet->id;
             $transaction->save();
 
             if ($transaction->status === TransactionStatus::Completed) {
@@ -186,12 +186,12 @@ trait HasWallet
 
             $fromTransaction = new Transaction($fromTransformer->transform($data));
             $fromTransaction->type = TransactionType::Withdraw;
-            $fromTransaction->wallet()->associate($fromWallet);
+            $fromTransaction->wallet_id = $fromWallet->id;
             $fromTransaction->save();
 
             $toTransaction = new Transaction($toTransformer->transform($data));
             $toTransaction->type = TransactionType::Deposit;
-            $toTransaction->wallet()->associate($toWallet);
+            $toTransaction->wallet_id = $toWallet->id;
             $toTransaction->save();
 
             $transfer = Transfer::query()->create([
