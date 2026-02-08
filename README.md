@@ -211,15 +211,18 @@ Transformers convert DTOs into the array used to create `Transaction` models. Yo
 
 #### Step 1: Create a transformer that implements the appropriate contract
 
+All transformer contracts accept `(Wallet $wallet, Data $data)` so you can use the wallet (e.g. for `opening_balance` / `closing_balance`).
+
 ```php
 namespace App\Transformers;
 
 use Eidolex\EWallet\Contracts\TopUpDataTransformerContract;
 use Eidolex\EWallet\Data\TopUpData;
+use Eidolex\EWallet\Models\Wallet;
 
 class CustomTopUpDataTransformer implements TopUpDataTransformerContract
 {
-    public function transform(TopUpData $data): array
+    public function transform(Wallet $wallet, TopUpData $data): array
     {
         return [
             'name' => $data->name,
@@ -253,11 +256,11 @@ class CustomTopUpDataTransformer implements TopUpDataTransformerContract
 | `transfer_from_data` | `TransferDataTransformerContract` | `TransferFromDataTransformer` | Transforms `TransferData` for the sender's withdrawal transaction |
 | `transfer_to_data` | `TransferDataTransformerContract` | `TransferToDataTransformer` | Transforms `TransferData` for the receiver's deposit transaction |
 
-> **Note:** Transfer transformers both implement `TransferDataTransformerContract` but are configured separately for the sender (`transfer_from_data`) and receiver (`transfer_to_data`) sides, allowing different logic for each.
+> **Note:** Transfer transformers both implement `TransferDataTransformerContract` but are configured separately for the sender (`transfer_from_data`) and receiver (`transfer_to_data`) sides. Register the concrete classes (`TransferFromDataTransformer` and `TransferToDataTransformer`) in config so each side uses the correct implementation.
 
 #### Transformer Return Array
 
-The array returned by `transform()` is passed directly to the `Transaction` model constructor. The available fields are:
+The array returned by `transform(Wallet $wallet, Data $data)` is passed directly to the `Transaction` model constructor. The available fields are:
 
 ```php
 [
@@ -277,36 +280,33 @@ The `type` and `wallet_id` fields are set automatically by the `HasWallet` trait
 ```php
 // config/e-wallet.php
 return [
-    'models' => [
-        // Eloquent model for wallets (polymorphic owner)
-        'wallet' => Eidolex\EWallet\Models\Wallet::class,
-
-        // Eloquent model for deposit/withdrawal records
-        'transaction' => Eidolex\EWallet\Models\Transaction::class,
-
-        // Eloquent model linking sender and receiver transactions
-        'transfer' => Eidolex\EWallet\Models\Transfer::class,
-    ],
-
     'enums' => [
-        // Cast for the Transaction `status` column (string or enum class)
-        // 'transaction_status' => Eidolex\EWallet\Enums\TransactionStatus::class,
-
         // Cast for the Transaction `name` column (string or enum class)
         'transaction_name' => Eidolex\EWallet\Enums\TransactionName::class,
+
+        // Cast for the Transaction `status` column (optional; package uses TransactionStatus enum by default)
+        // 'transaction_status' => Eidolex\EWallet\Enums\TransactionStatus::class,
 
         // Cast for the Transaction `metadata` column
         'transaction_metadata' => 'array',
     ],
 
     'transformers' => [
-        'transfer_from_data' => Eidolex\EWallet\Contracts\TransferDataTransformerContract::class,
-        'transfer_to_data' => Eidolex\EWallet\Contracts\TransferDataTransformerContract::class,
-        'withdraw_data' => Eidolex\EWallet\Contracts\WithdrawDataTransformerContract::class,
         'top_up_data' => Eidolex\EWallet\Contracts\TopUpDataTransformerContract::class,
+        'withdraw_data' => Eidolex\EWallet\Contracts\WithdrawDataTransformerContract::class,
+        'transfer_from_data' => Eidolex\EWallet\Transformers\TransferFromDataTransformer::class,
+        'transfer_to_data' => Eidolex\EWallet\Transformers\TransferToDataTransformer::class,
+    ],
+
+    'models' => [
+        'wallet' => Eidolex\EWallet\Models\Wallet::class,
+        'transaction' => Eidolex\EWallet\Models\Transaction::class,
+        'transfer' => Eidolex\EWallet\Models\Transfer::class,
     ],
 ];
 ```
+
+The service provider binds `TopUpDataTransformerContract` and `WithdrawDataTransformerContract` to their default implementations, so you can leave those config values as the contract. For transfers, use the concrete classes above so sender and receiver use the correct transformer.
 
 ### Custom Models
 
@@ -365,7 +365,7 @@ use HasWallet;
 
 The package creates three tables:
 
-**wallets** — One wallet per owner (polymorphic).
+**wallets** — One wallet per owner (polymorphic). Unique on `(owner_type, owner_id)`.
 
 | Column | Type |
 |---|---|
@@ -382,10 +382,10 @@ The package creates three tables:
 |---|---|
 | `id` | UUID (primary) |
 | `wallet_id` | UUID (foreign key) |
-| `type` | string (`deposit` / `withdraw`) |
+| `type` | unsigned tiny integer (enum: 0 = Withdraw, 1 = Deposit) |
 | `name` | string (configurable enum) |
 | `amount` | unsigned big integer |
-| `status` | string (configurable enum) |
+| `status` | unsigned tiny integer (enum: Pending, Completed, Cancelled, Failed, Refunded) |
 | `opening_balance` | unsigned big integer (nullable) |
 | `closing_balance` | unsigned big integer (nullable) |
 | `metadata` | JSON (nullable) |
@@ -406,7 +406,7 @@ The package creates three tables:
 
 ## Transaction Safety
 
-All wallet operations (`topUp`, `withdraw`, `transfer`) are wrapped in `DB::transaction()` with 3 automatic retries on deadlock, ensuring atomicity.
+All wallet operations (`topUp`, `withdraw`, `transfer`) are wrapped in `DB::transaction()` so each operation is atomic.
 
 ## License
 
